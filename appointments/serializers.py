@@ -5,7 +5,7 @@ class DoctorPublicSerializer(serializers.ModelSerializer):
     class Meta:
         model = Doctor
         # Absolute PII Isolation: No phone or internal personal emails exposed.
-        fields = ['id', 'full_name', 'work_start', 'work_end']
+        fields = ['id', 'full_name', 'opening_hours', 'closing_hours']
 
 
 class PatientPublicSerializer(serializers.ModelSerializer):
@@ -24,6 +24,6 @@ class AppointmentSerializer(serializers.ModelSerializer):
         model = Appointment
         fields = [
             'id', 'doctor', 'doctor_details', 'patient', 'patient_details', 
-            'slot_time', 'status', 'cancellation_reason'
+            'slot_time', 'status', 'cancel_reason'
         ]
-        read_only_fields = ['id', 'status', 'cancellation_reason']
+        read_only_fields = ['id', 'status', 'cancel_reason']
