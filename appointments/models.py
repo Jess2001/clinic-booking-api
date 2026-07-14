@@ -1,10 +1,6 @@
 from django.db import models
 from django.db.models import Q
 from django.conf import settings
-class AppointmentStatus(models.TextChoices):
-    CONFIRMED = 'CONFIRMED', 'Confirmed'
-    CANCELED = 'CANCELED', 'Canceled'
-    RESCHEDULED = 'RESCHEDULED', 'Rescheduled'
 
 
 class Doctor(models.Model):
@@ -15,7 +11,7 @@ class Doctor(models.Model):
         closing_hours = models.TimeField()
 
         def __str__(self):
-                return self.full_name
+                return f"Dr. {self.full_name}"
 
 
 class Patient(models.Model):
@@ -36,10 +32,16 @@ class Patient(models.Model):
 
 
 class Appointment(models.Model):
+
+    class Status(models.TextChoices):  # ← nested INSIDE Appointment
+        CONFIRMED = 'CONFIRMED', 'Confirmed'
+        CANCELLED = 'CANCELLED', 'Cancelled'
+        RESCHEDULED = 'RESCHEDULED', 'Rescheduled'
+
     doctor = models.ForeignKey(Doctor, on_delete=models.PROTECT, related_name='appointments')
     patient = models.ForeignKey(Patient, on_delete=models.PROTECT, related_name='appointments')
     slot_time = models.DateTimeField()
-    status = models.CharField(max_length=20, choices=AppointmentStatus.choices, default=AppointmentStatus.CONFIRMED)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.CONFIRMED)
     cancel_reason = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
