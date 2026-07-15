@@ -20,6 +20,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
     doctor_details = DoctorPublicSerializer(source='doctor', read_only=True)
     patient_details = PatientPublicSerializer(source='patient', read_only=True)
 
+    patient = serializers.PrimaryKeyRelatedField(read_only=True)
     class Meta:
         model = Appointment
         fields = [

@@ -4,20 +4,36 @@ from django.utils import timezone
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from django.shortcuts import get_object_or_404
+
 from .serializers import AppointmentSerializer
 from .services import BookingService
 from .selectors import AvailabilitySelector
-from .models import Appointment
+from .models import Appointment, Patient
+from .permissions import IsAppointmentOwner
 
 class AppointmentBookView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def post(self, request, *args, **kwargs):
+        # 1. Get current logged in user's Patient profile
+        try:
+            patient = request.user.patient
+        except Patient.DoesNotExist:
+            return Response(
+                {"error": "Authenticated user does not have a registered patient profile."}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+
         serializer = AppointmentSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         
         try:
+            # 2. Assign the appointment to the authenticated patient context
             appointment = BookingService.create_appointment(
                 doctor_id=serializer.validated_data['doctor'].id,
-                patient_id=serializer.validated_data['patient'].id,
+                patient_id=patient.id,
                 slot_time=serializer.validated_data['slot_time']
             )
             return Response(AppointmentSerializer(appointment).data, status=status.HTTP_201_CREATED)
@@ -26,6 +42,9 @@ class AppointmentBookView(APIView):
 
 
 class DoctorAvailabilityView(APIView):
+    # Allow prospective patients to view doctor calendars without logging in
+    permission_classes = [AllowAny]
+
     def get(self, request, id, *args, **kwargs):
         date_str = request.query_params.get('date')
         if not date_str:
@@ -44,25 +63,36 @@ class DoctorAvailabilityView(APIView):
 
 
 class AppointmentCancelView(APIView):
+    permission_classes = [IsAuthenticated, IsAppointmentOwner]
+
     def patch(self, request, id, *args, **kwargs):
+        # Enforce check that the appointment exists and belongs to the user
+        appointment = get_object_or_404(Appointment, id=id)
+        self.check_object_permissions(request, appointment)
+
         reason = request.data.get('reason')
         try:
-            appointment = BookingService.cancel_appointment(appointment_id=id, reason=reason)
-            return Response(AppointmentSerializer(appointment).data, status=status.HTTP_200_OK)
+            cancelled_appointment = BookingService.cancel_appointment(appointment_id=appointment.id, reason=reason)
+            return Response(AppointmentSerializer(cancelled_appointment).data, status=status.HTTP_200_OK)
         except ValidationError as e:
             return Response({"error": str(e.message)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class AppointmentRescheduleView(APIView):
+    permission_classes = [IsAuthenticated, IsAppointmentOwner]
+
     def patch(self, request, id, *args, **kwargs):
+        # Enforce check that the appointment exists and belongs to the user
+        appointment = get_object_or_404(Appointment, id=id)
+        self.check_object_permissions(request, appointment)
+
         new_slot_time_str = request.data.get('new_slot_time')
         if not new_slot_time_str:
             return Response({"error": "Missing 'new_slot_time' parameter."}, status=status.HTTP_400_BAD_REQUEST)
         
         try:
-            # Standardize string representations containing absolute 'Z' layouts to standard offsets
             new_slot_time = datetime.fromisoformat(new_slot_time_str.replace('Z', '+00:00'))
-            new_appointment = BookingService.reschedule_appointment(appointment_id=id, new_slot_time=new_slot_time)
+            new_appointment = BookingService.reschedule_appointment(appointment_id=appointment.id, new_slot_time=new_slot_time)
             return Response(AppointmentSerializer(new_appointment).data, status=status.HTTP_200_OK)
         except (ValueError, ValidationError) as e:
             msg = str(e.message) if hasattr(e, 'message') else str(e)
@@ -70,10 +100,17 @@ class AppointmentRescheduleView(APIView):
 
 
 class PatientAppointmentsListView(APIView):
-    """
-    Return upcoming appointments sorted chronologically for a patient.
-    """
+    permission_classes = [IsAuthenticated]
+
     def get(self, request, id, *args, **kwargs):
+        # Prevent a patient from snooping into someone else's upcoming schedules
+        try:
+            patient = request.user.patient
+            if patient.id != int(id):
+                return Response({"error": "You do not have permission to view other patients' appointments."}, status=status.HTTP_403_FORBIDDEN)
+        except Patient.DoesNotExist:
+             return Response({"error": "Patient profile not found."}, status=status.HTTP_403_FORBIDDEN)
+
         appointments = Appointment.objects.filter(
             patient_id=id,
             status=Appointment.Status.CONFIRMED,
