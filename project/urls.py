@@ -16,8 +16,18 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-
+from django.http import JsonResponse
+def api_root_view(request):
+    return JsonResponse({
+        "message": "Welcome to the Clinic Booking API",
+        "status": "Healthy",
+        "endpoints": {
+            "api": "/api/v1/",
+            "admin": "/admin/"
+        }
+    })
 urlpatterns = [
+    path("", api_root_view, name="api-root"),
     path('admin/', admin.site.react_admin if hasattr(admin, 'site') and hasattr(admin.site, 'react_admin') else admin.site.urls),
     path('api/v1/', include('appointments.urls')),
 ]
