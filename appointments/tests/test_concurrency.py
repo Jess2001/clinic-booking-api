@@ -34,9 +34,9 @@ def test_concurrent_booking_only_one_succeeds(doctor, patient):
     Simulates 5 simultaneous booking requests for the same slot.
     Only one must succeed — proves select_for_update + UniqueConstraint works.
     """
-    slot_time = (timezone.now() + timedelta(hours=3)).replace(
-        minute=0, second=0, microsecond=0
-    )
+    # Force the slot to tomorrow at 10:00 AM so it always falls within working hours
+    tomorrow = timezone.now() + timedelta(days=1)
+    slot_time = tomorrow.replace(hour=10, minute=0, second=0, microsecond=0)
 
     successes = []
     failures = []
@@ -62,7 +62,7 @@ def test_concurrent_booking_only_one_succeeds(doctor, patient):
     assert len(successes) == 1, f"Expected 1 success, got {len(successes)}"
     assert len(failures) == 4, f"Expected 4 failures, got {len(failures)}"
 
-    #  only one confirmed appointment  in DB
+    # only one confirmed appointment in DB
     confirmed_count = Appointment.objects.filter(
         doctor=doctor,
         slot_time=slot_time,

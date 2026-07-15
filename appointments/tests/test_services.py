@@ -33,9 +33,8 @@ def patient():
 
 @pytest.fixture
 def valid_slot():
-    return (timezone.now() + timedelta(hours=2)).replace(
-        minute=0, second=0, microsecond=0
-    )
+    tomorrow = timezone.now() + timedelta(days=1)
+    return tomorrow.replace(hour=10, minute=0, second=0, microsecond=0)
 
 
 def test_book_valid_appointment(doctor, patient, valid_slot):

@@ -51,12 +51,14 @@ class Command(BaseCommand):
         patient_atieno = Patient.objects.create(user=user2)
 
         # 4. Create an existing booked appointment for tomorrow so we can test "taken" slots
-        tomorrow = (timezone.now() + timedelta(days=1)).replace(hour=10, minute=0, second=0, microsecond=0)
-        
+        tomorrow = timezone.now() + timedelta(days=1)
+        tomorrow_slot = timezone.make_aware(
+            timezone.datetime(tomorrow.year, tomorrow.month, tomorrow.day, 10, 0, 0)
+        ) if timezone.is_naive(tomorrow) else tomorrow.replace(hour=10, minute=0, second=0, microsecond=0)
         Appointment.objects.create(
             doctor=dr_alice,
             patient=patient_kamau,
-            slot_time=tomorrow,
+            slot_time=tomorrow_slot,
             status='CONFIRMED'
         )
 
