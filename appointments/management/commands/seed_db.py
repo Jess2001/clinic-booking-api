@@ -57,7 +57,7 @@ class Command(BaseCommand):
             doctor=dr_alice,
             patient=patient_kamau,
             slot_time=tomorrow,
-            status=Appointment.Status.CONFIRMED
+            status='CONFIRMED'
         )
 
         self.stdout.write(self.style.SUCCESS("Database seeded successfully!"))
