@@ -1,28 +1,29 @@
-# Start from official Python 3.11 slim image
-# slim = smaller than full Python image, has what we need
 FROM python:3.11-slim
 
-# Set working directory inside the container
-# All subsequent commands run from here
+# Prevent Python from writing .pyc files and enable unbuffered logging
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
 WORKDIR /app
 
-# Copy requirements first — before copying all code
-# Why? Docker caches layers. If requirements haven't changed,
-# Docker skips the pip install step on rebuild. Faster builds.
+# Install system dependencies if you ever need to build C-extensions (like psycopg2)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY requirements.txt .
-
-
-# Install dependencies
-# --no-cache-dir = don't store pip cache inside image, keeps it smaller
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Now copy the rest of the code
 COPY . .
 
-# Expose port 8000 so Docker knows this container uses it
+# Run collectstatic during image build phase
+# We provide a dummy SECRET_KEY so Django can initialize settings safely without environmental dependency
+RUN DATABASE_URL=sqlite:///:memory: SECRET_KEY=build-time-dummy-key python manage.py collectstatic --noinput
+
 EXPOSE 8000
 
+# Make our entrypoint script executable
+RUN chmod +x /app/entrypoint.sh
 
-# Default command when container starts
-CMD ["gunicorn", "project.wsgi:application", "--bind", "0.0.0.0:8000"]
-#CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+ENTRYPOINT ["/app/entrypoint.sh"]
