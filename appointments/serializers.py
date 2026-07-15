@@ -1,14 +1,14 @@
 from rest_framework import serializers
 from .models import Appointment, Doctor, Patient
 
-class DoctorPublicSerializer(serializers.ModelSerializer):
+class DoctorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Doctor
         # Absolute PII Isolation: No phone or internal personal emails exposed.
         fields = ['id', 'full_name', 'opening_hours', 'closing_hours']
 
 
-class PatientPublicSerializer(serializers.ModelSerializer):
+class PatientSerializer(serializers.ModelSerializer):
     full_name = serializers.CharField(source='user.get_full_name', read_only=True)
 
     class Meta:
@@ -17,8 +17,8 @@ class PatientPublicSerializer(serializers.ModelSerializer):
 
 
 class AppointmentSerializer(serializers.ModelSerializer):
-    doctor_details = DoctorPublicSerializer(source='doctor', read_only=True)
-    patient_details = PatientPublicSerializer(source='patient', read_only=True)
+    doctor_details = DoctorSerializer(source='doctor', read_only=True)
+    patient_details = PatientSerializer(source='patient', read_only=True)
 
     patient = serializers.PrimaryKeyRelatedField(read_only=True)
     class Meta:

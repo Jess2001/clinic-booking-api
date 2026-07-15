@@ -14,12 +14,22 @@ class BookingService:
     @staticmethod
     def validate_slot_constraints(doctor: Doctor, slot_time: datetime):
         """
-        validation logic for appointment slot constraints.
+        Validation logic for appointment slot constraints.
+        Ensures proper timezone awareness before comparing.
         """
-        if slot_time < timezone.now():
+        # 1. Force slot_time to be timezone-aware 
+        if timezone.is_naive(slot_time):
+            slot_time = timezone.make_aware(slot_time, timezone.get_current_timezone())
+        else:
+            slot_time = timezone.localtime(slot_time)
+
+        now = timezone.now()
+
+        # Past and advance booking checks
+        if slot_time < now:
             raise ValidationError("Cannot book an appointment slot in the past.")
 
-        if slot_time < timezone.now() + timedelta(hours=1):
+        if slot_time < now + timedelta(hours=1):
             raise ValidationError("Appointments must be booked at least 1 hour in advance.")
 
         if slot_time.minute not in [0, 30] or slot_time.second != 0 or slot_time.microsecond != 0:
@@ -47,6 +57,10 @@ class BookingService:
             patient = Patient.objects.get(id=patient_id)
         except Patient.DoesNotExist:
             raise ValidationError("The requested patient record does not exist.")
+
+        # Normalize to aware datetime before running constraints or querying
+        if timezone.is_naive(slot_time):
+            slot_time = timezone.make_aware(slot_time, timezone.get_current_timezone())
 
         cls.validate_slot_constraints(doctor, slot_time)
 
@@ -93,7 +107,7 @@ class BookingService:
     @transaction.atomic
     def reschedule_appointment(cls, appointment_id: int, new_slot_time: datetime) -> Appointment:
         """
-        moves a reservation to a new slot.
+        Moves a reservation to a new slot.
         Original slot is freed only if new slot is successfully acquired.
         """
         try:
@@ -105,6 +119,11 @@ class BookingService:
             raise ValidationError("Cannot reschedule a cancelled appointment.")
 
         doctor = Doctor.objects.select_for_update().get(id=appointment.doctor_id)
+
+        # Normalize the new slot time to be timezone-aware
+        if timezone.is_naive(new_slot_time):
+            new_slot_time = timezone.make_aware(new_slot_time, timezone.get_current_timezone())
+
         cls.validate_slot_constraints(doctor, new_slot_time)
 
         if Appointment.objects.filter(

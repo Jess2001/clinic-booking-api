@@ -1,4 +1,4 @@
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone as py_timezone  
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from .models import Doctor, Appointment
@@ -19,9 +19,8 @@ class AvailabilitySelector:
             doctor = Doctor.objects.get(id=doctor_id)
         except Doctor.DoesNotExist:
             raise ValidationError("The requested doctor does not exist.")
-
-        start_dt = datetime.combine(target_date, doctor.opening_hours, tzinfo=timezone.utc)
-        end_dt = datetime.combine(target_date, doctor.closing_hours, tzinfo=timezone.utc)
+        start_dt = datetime.combine(target_date, doctor.opening_hours, tzinfo=py_timezone.utc)
+        end_dt = datetime.combine(target_date, doctor.closing_hours, tzinfo=py_timezone.utc)
 
         booked_slots = set(
             Appointment.objects.filter(

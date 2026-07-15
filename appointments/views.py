@@ -17,9 +17,8 @@ class AppointmentBookView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
-        # 1. Get current logged in user's Patient profile
         try:
-            patient = request.user.patient
+            patient = Patient.objects.get(user=request.user)
         except Patient.DoesNotExist:
             return Response(
                 {"error": "Authenticated user does not have a registered patient profile."}, 
@@ -30,7 +29,6 @@ class AppointmentBookView(APIView):
         serializer.is_valid(raise_exception=True)
         
         try:
-            # 2. Assign the appointment to the authenticated patient context
             appointment = BookingService.create_appointment(
                 doctor_id=serializer.validated_data['doctor'].id,
                 patient_id=patient.id,
@@ -42,7 +40,6 @@ class AppointmentBookView(APIView):
 
 
 class DoctorAvailabilityView(APIView):
-    # Allow prospective patients to view doctor calendars without logging in
     permission_classes = [AllowAny]
 
     def get(self, request, id, *args, **kwargs):
@@ -66,7 +63,6 @@ class AppointmentCancelView(APIView):
     permission_classes = [IsAuthenticated, IsAppointmentOwner]
 
     def patch(self, request, id, *args, **kwargs):
-        # Enforce check that the appointment exists and belongs to the user
         appointment = get_object_or_404(Appointment, id=id)
         self.check_object_permissions(request, appointment)
 
@@ -82,7 +78,6 @@ class AppointmentRescheduleView(APIView):
     permission_classes = [IsAuthenticated, IsAppointmentOwner]
 
     def patch(self, request, id, *args, **kwargs):
-        # Enforce check that the appointment exists and belongs to the user
         appointment = get_object_or_404(Appointment, id=id)
         self.check_object_permissions(request, appointment)
 
@@ -103,9 +98,8 @@ class PatientAppointmentsListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, id, *args, **kwargs):
-        # Prevent a patient from snooping into someone else's upcoming schedules
         try:
-            patient = request.user.patient
+            patient = Patient.objects.get(user=request.user)
             if patient.id != int(id):
                 return Response({"error": "You do not have permission to view other patients' appointments."}, status=status.HTTP_403_FORBIDDEN)
         except Patient.DoesNotExist:
