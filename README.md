@@ -283,7 +283,7 @@ AI was utilized as a pairing assistant for:
 
 (Boilerplate Generation & File setup): Generating standard configurations like the base .github/workflows/ci.yml syntax and basic pytest import blocks to save time on setup.I used AI to also quickly generate the initial empty class skeletons and imports for services.py and selectors.py. This saved me from typing repetitive CRUD boilerplate.
 
-(Refactoring): Assisted in debugging timezone-dependent test suite errors.
+(Refactoring): I initially used APIView which requires manually defining each HTTP method. AI suggested refactoring to ViewSet with @action decorators because it groups related operations on the same resource together, uses DefaultRouter to auto-generate URLs, and is more idiomatic DRF for resource-based APIs. The tradeoff is slightly less explicit URL control, but for standard REST resources it's cleaner.
 
 2. **An example where AI improved your work:**
 * **The Prompt**: I'm building a clinic booking API in Django. For the appointments, I need to associate them with a patient. Should I just use a raw integer patient_id on the Appointment model to keep things simple, or should I import Django's default User model and link to that directly? I want to make sure the database is secure, but I don't want to overcomplicate the architecture early on
