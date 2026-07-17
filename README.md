@@ -309,6 +309,8 @@ Separating writes (services.py) from reads (selectors.py) is a clean-code choice
 
 -Dual-Layer Concurrency Defense:Instead of defaulting to  simple application-level checks, I combined database-level row locks (select_for_update) with a physical SQL UniqueConstraint to make  sure the system cannot double-book, even under massive concurrent load.
 
+-Authentication using JWT : I decided to add authentication even though it was an ambigous requirement.I implemeted authentication to ensure not just anyine can book an appointment and patients can only access their appointments.I settled for JWT with custom permissions instead of session based auth because it is stateless and scales horizontally.
+
 
 
 
