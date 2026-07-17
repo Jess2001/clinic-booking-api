@@ -129,7 +129,7 @@ You can use the default seeded patient credentials to authenticate. Send a `POST
 * **Payload (JSON)**:
   ```json
   {
-    "username": "patient_user",
+    "username": "patient_kamau",
     "password": "securepassword123"
   }
 
@@ -254,7 +254,7 @@ pytest
 * **Hosting Platform**: The API is deployed to Render.
 
 
-* **Live Public URL**: `[[https://clinic-booking-api-xxxx.onrender.com](https://clinic-booking-api-xxxx.onrender.com)](https://clinic-booking-api-fxvt.onrender.com)` 
+* **Live Public URL**: ` https://clinic-booking-api-fxvt.onrender.com `
 
 
 ### CI/CD Pipeline
