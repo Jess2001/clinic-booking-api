@@ -105,9 +105,5 @@ class PatientAppointmentsListView(APIView):
         except Patient.DoesNotExist:
              return Response({"error": "Patient profile not found."}, status=status.HTTP_403_FORBIDDEN)
 
-        appointments = Appointment.objects.filter(
-            patient_id=id,
-            status=Appointment.Status.CONFIRMED,
-            slot_time__gte=timezone.now()
-        ).order_by('slot_time')
+        appointments = AvailabilitySelector.get_patient_appointments(patient_id=id)
         return Response(AppointmentSerializer(appointments, many=True).data, status=status.HTTP_200_OK)
