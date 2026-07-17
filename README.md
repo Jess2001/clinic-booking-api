@@ -281,7 +281,7 @@ Consistent with the requirements of Section 4, here is a transparent breakdown o
 AI was utilized as a pairing assistant for:
 (Brainstorming Schema Options): Discussing the database layout—specifically, whether to keep things overly simple by just storing an unvalidated patient_id integer versus creating a structured Patient model.
 
-(Boilerplate Generation): Generating standard configurations like the base .github/workflows/ci.yml syntax and basic pytest import blocks to save time on setup.
+(Boilerplate Generation & File setup): Generating standard configurations like the base .github/workflows/ci.yml syntax and basic pytest import blocks to save time on setup.I used AI to also quickly generate the initial empty class skeletons and imports for services.py and selectors.py. This saved me from typing repetitive CRUD boilerplate.
 
 (Refactoring): Assisted in debugging timezone-dependent test suite errors.
 
