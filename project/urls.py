@@ -17,6 +17,11 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from django.http import JsonResponse
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
+
 def api_root_view(request):
     return JsonResponse({
         "message": "Welcome to the Clinic Booking API",
@@ -29,5 +34,9 @@ def api_root_view(request):
 urlpatterns = [
     path("", api_root_view, name="api-root"),
     path('admin/', admin.site.react_admin if hasattr(admin, 'site') and hasattr(admin.site, 'react_admin') else admin.site.urls),
+
+    path('api/v1/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/v1/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/v1/', include('appointments.urls')),
+
 ]
