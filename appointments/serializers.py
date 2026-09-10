@@ -4,7 +4,6 @@ from .models import Appointment, Doctor, Patient
 class DoctorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Doctor
-        # Absolute PII Isolation: No phone or internal personal emails exposed.
         fields = ['id', 'full_name', 'opening_hours', 'closing_hours']
 
 
